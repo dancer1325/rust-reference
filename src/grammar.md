@@ -1,5 +1,4 @@
 # Grammar summary
 
-The following is a summary of the grammar production rules. For details on the syntax of this grammar, see *[notation.grammar.syntax]*.
-
-{{ grammar-summary }}
+* == summary of the grammar production rules
+* if you want to identify them -> | here, look for "```grammar"
