@@ -1,6 +1,9 @@
 r[macro.decl]
 # Macros by example
 
+* == define NEW syntax | higher-level
+* == declarative way
+
 r[macro.decl.syntax]
 ```grammar,macros
 MacroRulesDefinition ->

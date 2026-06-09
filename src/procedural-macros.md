@@ -1,59 +1,84 @@
 r[macro.proc]
 # Procedural macros
 
-r[macro.proc.intro]
-*Procedural macros* allow creating syntax extensions as execution of a function. Procedural macros come in one of three flavors:
+* == macros /
+  * allow
+    * creating syntax extensions -- as -- execution of a function
+    * run code | compile time / 
+      * operates | Rust syntax
+      * consume & produce Rust syntax 
+  * flavors
+    * [Function-like macros](#proc_macro-attribute)
+    * [Derive macros] - `#[derive(CustomDerive)]`
+    * [Attribute macros] - `#[CustomAttribute]`
+* == functions from an AST -- to -- ANOTHER AST
+* steps to define
+  * | root of a crate,
+    * `crate type=proc-macro`
+  * | use Cargo,
 
-* [Function-like macros] - `custom!(...)`
-* [Derive macros] - `#[derive(CustomDerive)]`
-* [Attribute macros] - `#[CustomAttribute]`
+   ```toml
+   [lib]
+   proc-macro = true
+   ```
 
-Procedural macros allow you to run code at compile time that operates over Rust syntax, both consuming and producing Rust syntax. You can sort of think of procedural macros as functions from an AST to another AST.
-
-r[macro.proc.def]
-Procedural macros must be defined in the root of a crate with the [crate type] of `proc-macro`. The macros may not be used from the crate where they are defined, and can only be used when imported in another crate.
-
-> [!NOTE]
-> When using Cargo, Procedural macro crates are defined with the `proc-macro` key in your manifest:
->
-> ```toml
-> [lib]
-> proc-macro = true
-> ```
+* uses
+  * import | ANOTHER crate
+* NOT uses
+  * from the crate | they are defined
 
 r[macro.proc.result]
-As functions, they must either return syntax, panic, or loop endlessly. Returned syntax either replaces or adds the syntax depending on the kind of procedural macro. Panics are caught by the compiler and are turned into a compiler error. Endless loops are not caught by the compiler which hangs the compiler.
+As functions, they must either return syntax, panic, or loop endlessly
+* Returned syntax either replaces or adds the syntax depending on the kind of procedural macro
+* Panics are caught by the compiler and are turned into a compiler error
+* Endless loops are not caught by the compiler which hangs the compiler.
 
-Procedural macros run during compilation, and thus have the same resources that the compiler has. For example, standard input, error, and output are the same that the compiler has access to. Similarly, file access is the same. Because of this, procedural macros have the same security concerns that [Cargo's build scripts] have.
+Procedural macros run during compilation, and thus have the same resources that the compiler has
+* For example, standard input, error, and output are the same that the compiler has access to
+* Similarly, file access is the same
+* Because of this, procedural macros have the same security concerns that [Cargo's build scripts] have.
 
 r[macro.proc.error]
-Procedural macros have two ways of reporting errors. The first is to panic. The second is to emit a [`compile_error`] macro invocation.
+Procedural macros have two ways of reporting errors
+* The first is to panic
+* The second is to emit a [`compile_error`] macro invocation.
 
 r[macro.proc.proc_macro-crate]
-## The `proc_macro` crate
+## `proc_macro` crate
 
 r[macro.proc.proc_macro-crate.intro]
-Procedural macro crates almost always will link to the compiler-provided [`proc_macro` crate]. The `proc_macro` crate provides types required for writing procedural macros and facilities to make it easier.
+Procedural macro crates almost always will link to the compiler-provided [`proc_macro` crate]
+* The `proc_macro` crate provides types required for writing procedural macros and facilities to make it easier.
 
 r[macro.proc.proc_macro-crate.token-stream]
-This crate primarily contains a [`TokenStream`] type. Procedural macros operate over *token streams* instead of AST nodes, which is a far more stable interface over time for both the compiler and for procedural macros to target. A *token stream* is roughly equivalent to `Vec<TokenTree>` where a `TokenTree` can roughly be thought of as lexical token. For example `foo` is an `Ident` token, `.` is a `Punct` token, and `1.2` is a `Literal` token. The `TokenStream` type, unlike `Vec<TokenTree>`, is cheap to clone.
+This crate primarily contains a [`TokenStream`] type
+* Procedural macros operate over *token streams* instead of AST nodes, which is a far more stable interface over time for both the compiler and for procedural macros to target
+* A *token stream* is roughly equivalent to `Vec<TokenTree>` where a `TokenTree` can roughly be thought of as lexical token
+* For example `foo` is an `Ident` token, `.` is a `Punct` token, and `1.2` is a `Literal` token
+* The `TokenStream` type, unlike `Vec<TokenTree>`, is cheap to clone.
 
 r[macro.proc.proc_macro-crate.span]
-All tokens have an associated `Span`. A `Span` is an opaque value that cannot be modified but can be manufactured. `Span`s represent an extent of source code within a program and are primarily used for error reporting. While you cannot modify a `Span` itself, you can always change the `Span` *associated* with any token, such as through getting a `Span` from another token.
+All tokens have an associated `Span`
+* A `Span` is an opaque value that cannot be modified but can be manufactured
+* `Span`s represent an extent of source code within a program and are primarily used for error reporting
+* While you cannot modify a `Span` itself, you can always change the `Span` *associated* with any token, such as through getting a `Span` from another token.
 
 r[macro.proc.hygiene]
 ## Procedural macro hygiene
 
-Procedural macros are *unhygienic*. This means they behave as if the output token stream was simply written inline to the code it's next to. This means that it's affected by external items and also affects external imports.
+Procedural macros are *unhygienic*
+* This means they behave as if the output token stream was simply written inline to the code it's next to
+* This means that it's affected by external items and also affects external imports.
 
-Macro authors need to be careful to ensure their macros work in as many contexts as possible given this limitation. This often includes using absolute paths to items in libraries (for example, `::std::option::Option` instead of `Option`) or by ensuring that generated functions have names that are unlikely to clash with other functions (like `__internal_foo` instead of `foo`).
+Macro authors need to be careful to ensure their macros work in as many contexts as possible given this limitation
+* This often includes using absolute paths to items in libraries (for example, `::std::option::Option` instead of `Option`) or by ensuring that generated functions have names that are unlikely to clash with other functions (like `__internal_foo` instead of `foo`).
 
 <!-- TODO: rule name needs improvement -->
 <!-- template:attributes -->
 r[macro.proc.proc_macro]
-## The `proc_macro` attribute
+## `proc_macro` attribute
 
-r[macro.proc.proc_macro.intro]
+* `custom!(...)`
 The *`proc_macro` [attribute][attributes]* defines a [function-like][macro.invocation] procedural macro.
 
 > [!EXAMPLE]
@@ -85,11 +110,14 @@ The *`proc_macro` [attribute][attributes]* defines a [function-like][macro.invoc
 > }
 > ```
 
-r[macro.proc.proc_macro.syntax]
-The `proc_macro` attribute uses the [MetaWord] syntax.
+* follow
+  * the [MetaWord] syntax
 
 r[macro.proc.proc_macro.allowed-positions]
-The `proc_macro` attribute may only be applied to a `pub` function of type `fn(TokenStream) -> TokenStream` where [`TokenStream`] comes from the [`proc_macro` crate]. It must have the ["Rust" ABI][items.fn.extern]. No other function qualifiers are allowed. It must be located in the root of the crate.
+The `proc_macro` attribute may only be applied to a `pub` function of type `fn(TokenStream) -> TokenStream` where [`TokenStream`] comes from the [`proc_macro` crate]
+* It must have the ["Rust" ABI][items.fn.extern]
+* No other function qualifiers are allowed
+* It must be located in the root of the crate.
 
 r[macro.proc.proc_macro.duplicates]
 The `proc_macro` attribute may only be specified once on a function.
@@ -113,10 +141,12 @@ Function-like procedural macros may be invoked in any macro invocation position,
 
 <!-- template:attributes -->
 r[macro.proc.derive]
-## The `proc_macro_derive` attribute
+## `proc_macro_derive` attribute
 
 r[macro.proc.derive.intro]
-Applying the *`proc_macro_derive` [attribute]* to a function defines a *derive macro* that can be invoked by the [`derive` attribute]. These macros are given the token stream of a [struct], [enum], or [union] definition and can emit new [items] after it. They can also declare and use [derive macro helper attributes].
+Applying the *`proc_macro_derive` [attribute]* to a function defines a *derive macro* that can be invoked by the [`derive` attribute]
+* These macros are given the token stream of a [struct], [enum], or [union] definition and can emit new [items] after it
+* They can also declare and use [derive macro helper attributes].
 
 > [!EXAMPLE]
 > This derive macro ignores its input and appends tokens that define a function.
@@ -161,10 +191,12 @@ DeriveMacroAttributes ->
     `attributes` `(` ( IDENTIFIER (`,` IDENTIFIER)* `,`?)? `)`
 ```
 
-The name of the derive macro is given by [DeriveMacroName]. The optional `attributes` argument is described in [macro.proc.derive.attributes].
+The name of the derive macro is given by [DeriveMacroName]
+* The optional `attributes` argument is described in [macro.proc.derive.attributes].
 
 r[macro.proc.derive.allowed-positions]
-The `proc_macro_derive` attribute may only be applied to a `pub` function with the [Rust ABI][items.fn.extern] defined in the root of the crate with a type of `fn(TokenStream) -> TokenStream`  where [`TokenStream`] comes from the [`proc_macro` crate]. The function may be `const` and may use `extern` to explicitly specify the Rust ABI, but it may not use any other [qualifiers][FunctionQualifiers] (e.g. it may not be `async` or `unsafe`).
+The `proc_macro_derive` attribute may only be applied to a `pub` function with the [Rust ABI][items.fn.extern] defined in the root of the crate with a type of `fn(TokenStream) -> TokenStream`  where [`TokenStream`] comes from the [`proc_macro` crate]
+* The function may be `const` and may use `extern` to explicitly specify the Rust ABI, but it may not use any other [qualifiers][FunctionQualifiers] (e.g. it may not be `async` or `unsafe`).
 
 r[macro.proc.derive.duplicates]
 The `proc_macro_derive` attribute may be used only once on a function.
@@ -173,13 +205,16 @@ r[macro.proc.derive.namespace]
 The `proc_macro_derive` attribute publicly defines the derive macro in the [macro namespace] in the root of the crate.
 
 r[macro.proc.derive.output]
-The input [`TokenStream`] is the token stream of the item to which the `derive` attribute is applied. The output [`TokenStream`] must be a (possibly empty) set of items. These items are appended following the input item within the same [module] or [block].
+The input [`TokenStream`] is the token stream of the item to which the `derive` attribute is applied. The output [`TokenStream`] must be a (possibly empty) set of items
+* These items are appended following the input item within the same [module] or [block].
 
 r[macro.proc.derive.attributes]
 ### Derive macro helper attributes
 
 r[macro.proc.derive.attributes.intro]
-Derive macros can declare *derive macro helper attributes* to be used within the scope of the [item] to which the derive macro is applied. These [attributes] are [inert]. While their purpose is to be used by the macro that declared them, they can be seen by any macro.
+Derive macros can declare *derive macro helper attributes* to be used within the scope of the [item] to which the derive macro is applied
+* These [attributes] are [inert]
+* While their purpose is to be used by the macro that declared them, they can be seen by any macro.
 
 r[macro.proc.derive.attributes.decl]
 A helper attribute for a derive macro is declared by adding its identifier to the `attributes` list in the `proc_macro_derive` attribute.
@@ -213,7 +248,9 @@ r[macro.proc.derive.attributes.scope]
 When a derive macro invocation is applied to an item, the helper attributes introduced by that derive macro become in scope 1) for attributes that are applied to that item and are applied lexically after the derive macro invocation and 2) for attributes that are applied to fields and variants inside of the item.
 
 > [!NOTE]
-> rustc currently allows derive helpers to be used before the macro that introduces them. Such derive helpers used out of order may not shadow other attribute macros. This behavior is deprecated and slated for removal.
+> rustc currently allows derive helpers to be used before the macro that introduces them
+* Such derive helpers used out of order may not shadow other attribute macros
+* This behavior is deprecated and slated for removal.
 >
 > <!-- ignore: requires external crates -->
 > ```rust,ignore
@@ -229,7 +266,7 @@ When a derive macro invocation is applied to an item, the helper attributes intr
 
 <!-- template:attributes -->
 r[macro.proc.attribute]
-## The `proc_macro_attribute` attribute
+## `proc_macro_attribute` attribute
 
 r[macro.proc.attribute.intro]
 The *`proc_macro_attribute` [attribute][attributes]* defines an *attribute macro* which can be used as an [outer attribute][attributes].
@@ -301,7 +338,10 @@ r[macro.proc.attribute.syntax]
 The `proc_macro_attribute` attribute uses the [MetaWord] syntax.
 
 r[macro.proc.attribute.allowed-positions]
-The `proc_macro_attribute` attribute may only be applied to a `pub` function of type `fn(TokenStream, TokenStream) -> TokenStream` where [`TokenStream`] comes from the [`proc_macro` crate]. It must have the ["Rust" ABI][items.fn.extern]. No other function qualifiers are allowed. It must be located in the root of the crate.
+The `proc_macro_attribute` attribute may only be applied to a `pub` function of type `fn(TokenStream, TokenStream) -> TokenStream` where [`TokenStream`] comes from the [`proc_macro` crate]
+* It must have the ["Rust" ABI][items.fn.extern]
+* No other function qualifiers are allowed
+* It must be located in the root of the crate.
 
 r[macro.proc.attribute.duplicates]
 The `proc_macro_attribute` attribute may only be specified once on a function.
@@ -318,7 +358,8 @@ Attribute macros can only be used on:
 - [Trait definitions]
 
 r[macro.proc.attribute.behavior]
-The first [`TokenStream`] parameter is the delimited token tree following the attribute's name but not including the outer delimiters. If the applied attribute contains only the attribute name or the attribute name followed by empty delimiters, the [`TokenStream`] is empty.
+The first [`TokenStream`] parameter is the delimited token tree following the attribute's name but not including the outer delimiters
+* If the applied attribute contains only the attribute name or the attribute name followed by empty delimiters, the [`TokenStream`] is empty.
 
 The second [`TokenStream`] is the rest of the [item], including other [attributes] on the [item].
 
@@ -350,7 +391,8 @@ Token trees in procedural macros are defined as
 - Identifiers, including keywords (`ident`, `r#ident`, `fn`)
 
 r[macro.proc.token.conversion.intro]
-Mismatches between these two definitions are accounted for when token streams are passed to and from procedural macros. Note that the conversions below may happen lazily, so they might not happen if the tokens are not actually inspected.
+Mismatches between these two definitions are accounted for when token streams are passed to and from procedural macros
+* Note that the conversions below may happen lazily, so they might not happen if the tokens are not actually inspected.
 
 r[macro.proc.token.conversion.to-proc_macro]
 When passed to a proc-macro
