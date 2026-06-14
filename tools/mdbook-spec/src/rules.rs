@@ -20,7 +20,7 @@ pub struct Rules {
     /// `source_path` is the path to the markdown source file relative to the
     /// `SUMMARY.md`.
     ///
-    /// `path` is the same as `source_path`, except filenames like `README.md.md`
+    /// `path` is the same as `source_path`, except filenames like `index.md.md`
     /// are translated to `index.md`. Which to use depends on if you are
     /// trying to access the source files (`source_path`), or creating links
     /// in the output (`path`).

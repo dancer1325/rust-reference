@@ -2,16 +2,26 @@ r[undefined]
 # Behavior considered undefined
 
 r[undefined.intro]
-Rust code is incorrect if it exhibits any of the behaviors in the following list. This includes code within `unsafe` blocks and `unsafe` functions. `unsafe` only means that avoiding undefined behavior is on the programmer; it does not change anything about the fact that Rust programs must never cause undefined behavior.
+* if Rust code | `unsafe` blocks & `unsafe` functions -> Rust code is incorrect 
+
+* `unsafe`
+  * == avoid undefined behavior is | programmer
+    * != Rust programs MUST NEVER cause undefined behavior
+  * recommendations
+    * [Rustonomicon](https://github.com/dancer1325/rust-nomicon)
 
 r[undefined.soundness]
-It is the programmer's responsibility when writing `unsafe` code to ensure that any safe code interacting with the `unsafe` code cannot trigger these behaviors. `unsafe` code that satisfies this property for any safe client is called *sound*; if `unsafe` code can be misused by safe code to exhibit undefined behavior, it is *unsound*.
+* programmer's responsibility | write `unsafe` code
+  * *sound*
+    * == ensure that: ANY safe code / interact with the `unsafe` code, can NOT trigger these behaviors
 
-> [!WARNING]
-> The following list is not exhaustive; it may grow or shrink. There is no formal model of Rust's semantics for what is and is not allowed in unsafe code, so there may be more behavior considered unsafe. We also reserve the right to make some of the behavior in that list defined in the future. In other words, this list does not say that anything will *definitely* always be undefined in all future Rust versions (but we might make such commitments for some list items in the future).
->
-> Please read the [Rustonomicon] before writing unsafe code.
+* *unsound*
+  * == if `unsafe` code can be misused by safe code -- to -- exhibit undefined behavior 
 
+* unsafe code list
+  * Reason:🧠there is NO formal model of Rust's semantics🧠
+
+TODO: 
 r[undefined.race]
 * Data races.
 
@@ -19,12 +29,16 @@ r[undefined.pointer-access]
 * Accessing (loading from or storing to) a place that is [dangling] or [based on a misaligned pointer].
 
 r[undefined.place-projection]
-* Performing an offsetting place projection that violates the requirements of [in-bounds pointer arithmetic](pointer#method.offset). An offsetting place projection is a [field expression][project-field], a [tuple index expression][project-tuple], or an [array/slice index expression][project-slice].
+* Performing an offsetting place projection that violates the requirements of [in-bounds pointer arithmetic](pointer#method.offset)
+* An offsetting place projection is a [field expression][project-field], a [tuple index expression][project-tuple], or an [array/slice index expression][project-slice].
 
 r[undefined.alias]
-* Breaking the pointer aliasing rules. The exact aliasing rules are not determined yet, but here is an outline of the general principles:
+* Breaking the pointer aliasing rules
+* The exact aliasing rules are not determined yet, but here is an outline of the general principles:
 
-  `&T` must point to memory that is not mutated while they are live (except for data inside an [`UnsafeCell<U>`]), and `&mut T` must point to memory that is not read or written by any pointer not derived from the reference and that no other reference points to while they are live. `Box<T>` is treated similar to `&'static mut T` for the purpose of these rules. The exact liveness duration is not specified, but some bounds exist:
+  `&T` must point to memory that is not mutated while they are live (except for data inside an [`UnsafeCell<U>`]), and `&mut T` must point to memory that is not read or written by any pointer not derived from the reference and that no other reference points to while they are live
+* `Box<T>` is treated similar to `&'static mut T` for the purpose of these rules
+* The exact liveness duration is not specified, but some bounds exist:
 
   * For references, the liveness duration is upper-bounded by the syntactic lifetime assigned by the borrow checker; it cannot be live any *longer* than that lifetime.
   * Each time a reference or box is dereferenced or reborrowed, it is considered live.
@@ -34,7 +48,9 @@ r[undefined.alias]
   All this also applies when values of these types are passed in a (nested) field of a compound type, but not behind pointer indirections.
 
 r[undefined.immutable]
-* Mutating immutable bytes. All bytes reachable through a [const-promoted] expression are immutable, as well as bytes reachable through borrows in `static` and `const` initializers that have been [lifetime-extended] to `'static`. The bytes owned by an immutable binding or immutable `static` are immutable, unless those bytes are part of an [`UnsafeCell<U>`].
+* Mutating immutable bytes
+* All bytes reachable through a [const-promoted] expression are immutable, as well as bytes reachable through borrows in `static` and `const` initializers that have been [lifetime-extended] to `'static`
+* The bytes owned by an immutable binding or immutable `static` are immutable, unless those bytes are part of an [`UnsafeCell<U>`].
 
   Moreover, the bytes [pointed to] by a shared reference, including transitively through other references (both shared and mutable) and `Box`es, are immutable; transitivity includes those references stored in fields of compound types.
 
